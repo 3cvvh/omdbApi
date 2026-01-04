@@ -17,11 +17,14 @@ let searchBtn = document.getElementById('search');
 
 searchBtn.addEventListener("keyup",async (e) => {
 if(e.key == "Enter"){
+  try{
     let film = await fetchData('http://www.omdbapi.com/?','apikey=9d0ed2de',`s=${searchBtn.value}`)
-    console.log(film)
-    document.getElementById('loop').innerHTML = film.map(f => {
+    document.getElementById('loop').innerHTML = film.Search.map(f => {
         return card(f)
     } ).join('')
+  }catch(err){
+    console.log(err)
+  }
 }
 })
 
@@ -29,8 +32,18 @@ let fetchData =  (endPoint,...params) =>{
     let url  =`${endPoint}`
     url += params.map(p => p ).join('&')
     let data = fetch(url)
-        .then(respone => respone.json())
-        .then(respone => respone.Search || [])
+        .then(respone => {
+          if(respone.ok == false){
+            throw new Error("error" + respone)
+          }
+          return respone.json()
+        })
+        .then(respone => {
+          if(respone.Response == "False"){
+            throw new Error("err:"+respone.Error)
+          }
+          return respone
+        })
         .catch(err => { console.log("gagal", err); return [] })
     return data
 }
@@ -49,24 +62,41 @@ return `<div class="group cursor-pointer w-48 flex-shrink-0">
 </div>`
 }
 async function randFilm(){
-    let rand = Math.random() * 100 / 2
-    let pembulatan = Math.round(rand)
-    let hasil = ``
-    if(pembulatan  >= 1 && pembulatan <= 15){
-        hasil = "A silent voice"
-    }else if(pembulatan >= 20 && pembulatan <= 25){
-        hasil = "naruto"
-    }else if(pembulatan >= 26)
+  let rand = Math.random() * 100 / 2
+  let pembulatan = Math.round(rand)
+  let hasil = ``
+  if(pembulatan  >= 1 && pembulatan <= 15){
+    hasil = "A silent voice"
+  }else if(pembulatan >= 20 && pembulatan <= 25){
+    hasil = "naruto"
+  }else if(pembulatan >= 26)
     {
-        hasil =  "spy family"
+      hasil =  "spy family"
     }
-    let hasi2 =  await fetchData('http://www.omdbapi.com/?','apikey=9d0ed2de',`s=${hasil}`)
-    console.log(hasi2)
-   document.getElementById('loop').innerHTML = hasi2.map((c) => {
-        return card(c   )
-    })
+    try{
+  // let hasi2 =  await fetch(`http://www.omdbapi.com/?apikey=9d0ed2de&s=${hasil}`).then(res => {
+  //   if(res.ok == false){
+  //     throw new Error("err")
+  //   }
+  //   return res.json()
+  // }).then(res => {
+  //   if(res.Response == "False"){
+  //     throw new Error(`err:${res.Error}`)
+  //   }
+  //   return res
+  // })
+  let hasi2 = await fetchData('http://www.omdbapi.com/?','apikey=9d0ed2de',`s=${hasil}`)
+ document.getElementById('loop').innerHTML = hasi2.Search.map((c) => {
+      return card(c)
+  }) 
+
+}catch(err){
+
+  console.log(err)
 }
-console.log(randFilm())
+    
+}
+randFilm()
 document.body.addEventListener('click',async e => {
     if(e.target.dataset.id){
         try{
